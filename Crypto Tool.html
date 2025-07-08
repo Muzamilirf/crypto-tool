@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #e0f2fe, #fef3c7);
+        }
+        .container {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        button {
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #output {
+            transition: background-color 0.3s ease;
+        }
+        .error {
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .input-container {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+        }
+        .input-icon:hover {
+            color: #333;
+        }
+        .output-container {
+            position: relative;
+        }
+        .textarea-container {
+            position: relative;
+        }
+        .textarea-icon {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            color: #666;
+        }
+        .textarea-icon:hover {
+            color: #333;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="container bg-white rounded-2xl p-8 w-full max-w-md shadow-lg">
+        <h1 class="text-3xl font-bold text-center text-pink-600 mb-6 font-[Poppins, sans-serif]">
+            ✨ Crypto Tool ✨
+        </h1>
+        <div class="mb-4">
+            <label for="key" class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+            <div class="input-container">
+                <input 
+                    type="password" 
+                    id="key" 
+                    class="w-full p-3 pr-28 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-300 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400"
+                    placeholder="Enter your secret key 🔑"
+                >
+                <i class="fas fa-eye input-icon" id="togglePassword" onclick="togglePasswordVisibility()"></i>
+                <i class="fas fa-copy input-icon" style="right: 35px;" onclick="copyKey()"></i>
+                <i class="fas fa-paste input-icon" style="right: 60px;" onclick="pasteKey()"></i>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="inputText" class="block text-sm font-medium text-gray-700 mb-2">Text to Encrypt/Decrypt</label>
+            <div class="textarea-container">
+                <textarea 
+                    id="inputText" 
+                    rows="4" 
+                    class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-300 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400"
+                    placeholder="Enter text (e.g., password, email) 📝"
+                ></textarea>
+                <i class="fas fa-copy textarea-icon" onclick="copyInputText()"></i>
+                <i class="fas fa-paste textarea-icon" style="right: 35px;" onclick="pasteInputText()"></i>
+            </div>
+        </div>
+        <div class="flex justify-between mb-4">
+            <button 
+                id="encryptBtn" 
+                onclick="encrypt()" 
+                class="w-[48%] bg-gradient-to-r from-green-400 to-green-500 text-white py-2 rounded-lg font-medium hover:from-green-500 hover:to-green-600"
+            >
+                Encrypt 🛡️
+            </button>
+            <button 
+                id="decryptBtn" 
+                onclick="decrypt()" 
+                class="w-[48%] bg-gradient-to-r from-blue-400 to-blue-500 text-white py-2 rounded-lg font-medium hover:from-blue-500 hover:to-blue-600"
+            >
+                Decrypt 🔓
+            </button>
+        </div>
+        <div class="output-container">
+            <div id="output" class="p-3 rounded-lg bg-gray-100 text-gray-800 min-h-[60px] break-words"></div>
+            <i class="fas fa-copy input-icon" style="top: 20px;" onclick="copyOutput()"></i>
+        </div>
+        <div id="error" class="error text-red-500 text-sm mt-2 text-center"></div>
+        <div class="footer text-center mt-6 text-gray-600 text-sm">
+            Created by Muzamil Ahmad 
+            <a href="https://www.linkedin.com/in/muzamilirf/" target="_blank" class="text-blue-600 hover:underline inline-flex items-center">
+                <i class="fab fa-linkedin mr-1"></i> LinkedIn
+            </a>
+        </div>
+    </div>
+    <script>
+        function togglePasswordVisibility() {
+            const keyInput = document.getElementById('key');
+            const toggleIcon = document.getElementById('togglePassword');
+            if (keyInput.type === 'password') {
+                keyInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                keyInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        function copyKey() {
+            const keyInput = document.getElementById('key');
+            navigator.clipboard.writeText(keyInput.value).then(() => {
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = 'Secret key copied! 📋';
+                errorDiv.classList.remove('text-red-500');
+                errorDiv.classList.add('text-green-500');
+                setTimeout(() => {
+                    errorDiv.textContent = '';
+                    errorDiv.classList.remove('text-green-500');
+                    errorDiv.classList.add('text-red-500');
+                }, 2000);
+            });
+        }
+
+        function pasteKey() {
+            navigator.clipboard.readText().then(text => {
+                document.getElementById('key').value = text;
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = 'Secret key pasted! 📋';
+                errorDiv.classList.remove('text-red-500');
+                errorDiv.classList.add('text-green-500');
+                setTimeout(() => {
+                    errorDiv.textContent = '';
+                    errorDiv.classList.remove('text-green-500');
+                    errorDiv.classList.add('text-red-500');
+                }, 2000);
+            });
+        }
+
+        function copyInputText() {
+            const inputText = document.getElementById('inputText');
+            navigator.clipboard.writeText(inputText.value).then(() => {
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = 'Input text copied! 📋';
+                errorDiv.classList.remove('text-red-500');
+                errorDiv.classList.add('text-green-500');
+                setTimeout(() => {
+                    errorDiv.textContent = '';
+                    errorDiv.classList.remove('text-green-500');
+                    errorDiv.classList.add('text-red-500');
+                }, 2000);
+            });
+        }
+
+        function pasteInputText() {
+            navigator.clipboard.readText().then(text => {
+                document.getElementById('inputText').value = text;
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = 'Input text pasted! 📋';
+                errorDiv.classList.remove('text-red-500');
+                errorDiv.classList.add('text-green-500');
+                setTimeout(() => {
+                    errorDiv.textContent = '';
+                    errorDiv.classList.remove('text-green-500');
+                    errorDiv.classList.add('text-red-500');
+                }, 2000);
+            });
+        }
+
+        function copyOutput() {
+            const outputDiv = document.getElementById('output');
+            navigator.clipboard.writeText(outputDiv.textContent).then(() => {
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = 'Output copied! 📋';
+                errorDiv.classList.remove('text-red-500');
+                errorDiv.classList.add('text-green-500');
+                setTimeout(() => {
+                    errorDiv.textContent = '';
+                    errorDiv.classList.remove('text-green-500');
+                    errorDiv.classList.add('text-red-500');
+                }, 2000);
+            });
+        }
+
+        function encrypt() {
+            const key = document.getElementById('key').value;
+            const inputText = document.getElementById('inputText').value;
+            const outputDiv = document.getElementById('output');
+            const errorDiv = document.getElementById('error');
+
+            if (!key || !inputText) {
+                errorDiv.textContent = 'Please enter both a secret key and text! 😔';
+                errorDiv.classList.add('animate-shake');
+                setTimeout(() => errorDiv.classList.remove('animate-shake'), 300);
+                outputDiv.textContent = '';
+                return;
+            }
+
+            try {
+                const encrypted = CryptoJS.AES.encrypt(inputText, key).toString();
+                outputDiv.textContent = encrypted;
+                outputDiv.classList.add('bg-green-50');
+                setTimeout(() => outputDiv.classList.remove('bg-green-50'), 500);
+                errorDiv.textContent = '';
+            } catch (e) {
+                errorDiv.textContent = 'Encryption failed. Try again! 😕';
+                errorDiv.classList.add('animate-shake');
+                setTimeout(() => errorDiv.classList.remove('animate-shake'), 300);
+                outputDiv.textContent = '';
+            }
+        }
+
+        function decrypt() {
+            const key = document.getElementById('key').value;
+            const inputText = document.getElementById('inputText').value;
+            const outputDiv = document.getElementById('output');
+            const errorDiv = document.getElementById('error');
+
+            if (!key || !inputText) {
+                errorDiv.textContent = 'Please enter both a secret key and text! 😔';
+                errorDiv.classList.add('animate-shake');
+                setTimeout(() => errorDiv.classList.remove('animate-shake'), 300);
+                outputDiv.textContent = '';
+                return;
+            }
+
+            try {
+                const decrypted = CryptoJS.AES.decrypt(inputText, key).toString(CryptoJS.enc.Utf8);
+                if (!decrypted) {
+                    throw new Error('Invalid decryption');
+                }
+                outputDiv.textContent = decrypted;
+                outputDiv.classList.add('bg-blue-50');
+                setTimeout(() => outputDiv.classList.remove('bg-blue-50'), 500);
+                errorDiv.textContent = '';
+            } catch (e) {
+                errorDiv.textContent = 'Decryption failed. Check key or text! 😕';
+                errorDiv.classList.add('animate-shake');
+                setTimeout(() => errorDiv.classList.remove('animate-shake'), 300);
+                outputDiv.textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>
